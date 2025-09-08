@@ -1,0 +1,47 @@
+{
+  "name": "polygon-proxy",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "clean": "npx hardhat clean && rm -rf cache coverage coverage.json",
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "test-rpc": "npx hardhat node",
+    "deploy-local": "npx hardhat run scripts/sample-script.js --network localhost",
+    "coverage": "npx hardhat coverage",
+    "typechain:generate": "yarn typechain --target=ethers-v5 ./contracts/**/*.sol --out-dir=./types",
+    "deploy": "npx hardhat run scripts/deploy.ts --network polygon_mumbai",
+    "upgrade": "npx hardhat run scripts/upgrade.ts --network polygon_mumbai",
+    "deploy_multiSender": "npx hardhat run scripts/deploy_multiSender --network polygon_mumbai",
+    "verify": "npx hardhat verify  --network polygon_mumbai"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.2",
+    "@nomicfoundation/hardhat-ethers": "^3.0.4",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@nomicfoundation/hardhat-verify": "^1.1.1",
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "@openzeppelin/hardhat-upgrades": "^2.2.1",
+    "@typechain/ethers-v6": "^0.5.0",
+    "@typechain/hardhat": "^9.0.0",
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
+    "chai": "^4.3.7",
+    "ethereum-waffle": "^4.0.10",
+    "hardhat": "^2.17.3",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solidity-coverage": "^0.8.4",
+    "ts-node": "^10.9.1",
+    "typechain": "^8.3.1",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.3",
+    "@openzeppelin/contracts-upgradeable": "^4.9.3",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.7.1"
+  }
+}
