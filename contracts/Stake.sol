@@ -23,7 +23,6 @@ contract DualTokenStaking is
     // ------------------------------------------------------------------------
     uint256 private constant YEAR = 365 days;
     uint256 private constant BPS = 10_000; // 100% = 10_000 bps
-    uint256 private constant ONE = 1e18; // fixed-point for ratios
 
     struct Position {
         uint256 startTS;
@@ -232,28 +231,6 @@ contract DualTokenStaking is
         emit Unstaked(msg.sender, id, usdcAmt, maisonAmt);
     }
 
-    // ------------------------------------------------------------------------
-    // Views
-    // ------------------------------------------------------------------------
-    function getStake(
-        address user,
-        uint256 id
-    ) external view returns (Position memory) {
-        return positions[user][id];
-    }
-
-    function earned(
-        address user,
-        uint256 id
-    ) external view returns (uint256 usdcEarned, uint256 maisonEarned) {
-        return _accrued(user, id);
-    }
-
-    function canUnstake(address user, uint256 id) external view returns (bool) {
-        Position storage p = positions[user][id];
-        return p.active && block.timestamp >= p.lockEndTS;
-    }
-
     function nextPayoutTime(
         address user,
         uint256 id
@@ -261,28 +238,6 @@ contract DualTokenStaking is
         Position storage p = positions[user][id];
         if (!p.active) return 0;
         return p.lastClaimTS + rewardInterval;
-    }
-
-    function totalStakedUSDC() external view returns (uint256 total) {
-        for (uint256 i = 0; i < allStakers.length; i++) {
-            address u = allStakers[i];
-            uint256 n = positionCount[u];
-            for (uint256 j = 0; j < n; j++) {
-                Position storage p = positions[u][j];
-                if (p.active) total += p.usdcPrincipal;
-            }
-        }
-    }
-
-    function totalStakedMaison() external view returns (uint256 total) {
-        for (uint256 i = 0; i < allStakers.length; i++) {
-            address u = allStakers[i];
-            uint256 n = positionCount[u];
-            for (uint256 j = 0; j < n; j++) {
-                Position storage p = positions[u][j];
-                if (p.active) total += p.maisonPrincipal;
-            }
-        }
     }
 
     // ------------------------------------------------------------------------

@@ -1,13 +1,13 @@
 import { ethers, upgrades } from "hardhat";
 
-const stakeToken = "";
-const rewardToken = "";
+const usdc = "";
+const maison = "";
 
 async function main() {
-  const Stake = await ethers.getContractFactory("Stake");
+  const Stake = await ethers.getContractFactory("DualTokenStaking");
   const stake = await upgrades.deployProxy(
     Stake,
-    [stakeToken, rewardToken, 5 * 60, 1, 10000, 60 * 60, 1440 * 60],
+    [usdc, maison, 1000, 30 * 86400, 180 * 86400],
     {
       initializer: "initialize",
     }
