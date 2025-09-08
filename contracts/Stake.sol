@@ -112,7 +112,6 @@ contract DualTokenStaking is
         __Pausable_init();
 
         require(usdc != address(0) && maison != address(0), "zero token");
-        require(_apyBps <= 5000, "APY too high"); // 50% sanity guard (adjust)
         require(_rewardInterval > 0 && _lockPeriod >= _rewardInterval, "bad timing");
         require(_maisonPerUsdc > 0, "bad ratio");
 
