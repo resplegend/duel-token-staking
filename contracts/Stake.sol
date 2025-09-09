@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IOracle} from "./interface/IOracle.sol";
 
 /// @title DualTokenStaking (USDC + MAISON )
 /// @notice Users stake *both* tokens in a fixed ratio; rewards paid in both.
@@ -53,6 +54,8 @@ contract DualTokenStaking is
     mapping(address => uint256) public positionCount;
     address[] public allStakers;
 
+    IOracle public Oracle;
+
     // ------------------------------------------------------------------------
     // Events
     // ------------------------------------------------------------------------
@@ -82,6 +85,7 @@ contract DualTokenStaking is
     function initialize(
         address usdc,
         address maison,
+        address _oracle,
         uint256 _apyBps,
         uint256 _rewardInterval,
         uint256 _lockPeriod
@@ -98,6 +102,7 @@ contract DualTokenStaking is
 
         USDC = IERC20Upgradeable(usdc);
         MAISON = IERC20Upgradeable(maison);
+        Oracle = IOracle(_oracle);
         apyBps = _apyBps;
         rewardInterval = _rewardInterval;
         lockPeriod = _lockPeriod;
@@ -132,9 +137,13 @@ contract DualTokenStaking is
     // Staking (paired)
     // ------------------------------------------------------------------------
     function stake(
-        uint256 usdcAmount,
-        uint256 maisonAmount
+        uint256 usdcAmount
     ) external nonReentrant whenNotPaused returns (uint256 id) {
+        // Fetch MAISON price from oracle
+        (, uint256 maisonPrice) = Oracle.getLatestRoundData();
+        require(maisonPrice > 0, "Invalid price");
+
+        uint256 maisonAmount = (usdcAmount * 1e18) / maisonPrice;
         // Pull principals
         USDC.safeTransferFrom(msg.sender, address(this), usdcAmount);
         MAISON.safeTransferFrom(msg.sender, address(this), maisonAmount);
