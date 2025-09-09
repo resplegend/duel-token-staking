@@ -74,6 +74,12 @@ describe("DualTokenStaking - Core Functions", function () {
     await maison.connect(user1).approve(await dualTokenStaking.getAddress(), ethers.MaxUint256);
     await usdc.connect(user2).approve(await dualTokenStaking.getAddress(), ethers.MaxUint256);
     await maison.connect(user2).approve(await dualTokenStaking.getAddress(), ethers.MaxUint256);
+
+    // Fund the contract with rewards
+    const rewardAmount = ethers.parseUnits("10000", USDC_DECIMALS);
+    const maisonRewardAmount = ethers.parseEther("20000");
+    await usdc.mint(await dualTokenStaking.getAddress(), rewardAmount);
+    await maison.mint(await dualTokenStaking.getAddress(), maisonRewardAmount);
   });
 
   describe("Stake Function", function () {
@@ -141,8 +147,8 @@ describe("DualTokenStaking - Core Functions", function () {
     });
 
     it("Should revert when user has insufficient MAISON balance", async function () {
-      // Set very high price so user needs more MAISON than they have
-      await oracle.setPrice(ethers.parseEther("1000")); // $1000 per MAISON
+      // Set extremely low price so required MAISON amount becomes huge
+      await oracle.setPrice(1n); // 1 wei per MAISON
       const usdcAmount = ethers.parseUnits("1000", USDC_DECIMALS);
 
       await expect(
@@ -234,6 +240,17 @@ describe("DualTokenStaking - Core Functions", function () {
     it("Should revert when contract has insufficient rewards", async function () {
       await time.increase(REWARD_INTERVAL + 1);
 
+      // Burn all rewards from the contract to simulate insufficient rewards
+      const contractAddr = await dualTokenStaking.getAddress();
+      const usdcBal = await usdc.balanceOf(contractAddr);
+      const maisonBal = await maison.balanceOf(contractAddr);
+      if (usdcBal > 0n) {
+        await usdc.burn(contractAddr, usdcBal);
+      }
+      if (maisonBal > 0n) {
+        await maison.burn(contractAddr, maisonBal);
+      }
+
       await expect(
         dualTokenStaking.connect(user1).claim(0)
       ).to.be.revertedWith("Not enough rewards to claim");
@@ -308,9 +325,21 @@ describe("DualTokenStaking - Core Functions", function () {
     it("Should revert when contract has insufficient funds", async function () {
       await time.increase(LOCK_PERIOD + 1);
 
-      // Drain the contract
-      await usdc.connect(owner).transfer(ownerAddress, await usdc.balanceOf(await dualTokenStaking.getAddress()));
-      await maison.connect(owner).transfer(ownerAddress, await maison.balanceOf(await dualTokenStaking.getAddress()));
+      // Get the position to know how much to leave
+      const position = await dualTokenStaking.positions(user1Address, 0);
+      const usdcNeeded = position.usdcPrincipal;
+      const maisonNeeded = position.maisonPrincipal;
+
+      // Burn so that balances are just below required amounts
+      const contractAddr2 = await dualTokenStaking.getAddress();
+      const usdcBalance = await usdc.balanceOf(contractAddr2);
+      const maisonBalance = await maison.balanceOf(contractAddr2);
+      if (usdcBalance > usdcNeeded) {
+        await usdc.burn(contractAddr2, usdcBalance - usdcNeeded + 1n);
+      }
+      if (maisonBalance > maisonNeeded) {
+        await maison.burn(contractAddr2, maisonBalance - maisonNeeded + 1n);
+      }
 
       await expect(
         dualTokenStaking.connect(user1).unstake(0)
